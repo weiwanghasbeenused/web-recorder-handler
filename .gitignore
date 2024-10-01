@@ -1,0 +1,5 @@
+.DS_Store
+node_modules
+videos/*.mp4
+videos/*.webm
+

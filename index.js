@@ -13,6 +13,8 @@ const video_path = 'videos/'
 const upload = multer({ dest: video_path });
 // app.use('/videos', express.static(path.join(__dirname, 'videos')));
 // Middleware to parse JSON request bodies
+app.set('trust proxy', true);  // This makes req.protocol honor the 'X-Forwarded-Proto' header
+
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Handles URL-encoded form data

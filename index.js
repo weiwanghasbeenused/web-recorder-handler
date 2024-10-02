@@ -11,6 +11,7 @@ ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 const app = express();
 const video_path = 'videos/'
 const upload = multer({ dest: video_path });
+// app.use('/videos', express.static(path.join(__dirname, 'videos')));
 // Middleware to parse JSON request bodies
 app.use(cors());
 app.use(express.json());
@@ -18,30 +19,31 @@ app.use(express.urlencoded({ extended: true })); // Handles URL-encoded form dat
 
 // Handle POST requests to /submit
 app.post('/submit', upload.single('video'), (req, res) => {
-  const videoFile = req.file;
-  const { videoWidth, videoHeight } = req.body;
-  
-  const targetDir = path.join(__dirname, video_path);
-  const targetFile = path.join(targetDir, videoFile.filename);
+    const site_url = req.protocol + '://' + req.get('host'); // http://localhost:3000
+    const videoFile = req.file;
+    const { videoWidth, videoHeight } = req.body;
 
-  const filename = 'recording';
+    const targetDir = path.join(__dirname, video_path);
+    const targetFile = path.join(targetDir, videoFile.filename);
 
-  const getVideoResolution = (videoPath) => {
-    return new Promise((resolve, reject) => {
-      ffmpeg.ffprobe(videoPath, (err, metadata) => {
-        if (err) {
-          reject(err);
-        } else {
-          const videoStream = metadata.streams.find(stream => stream.codec_type === 'video');
-          if (videoStream) {
-            resolve({ width: videoStream.width, height: videoStream.height });
-          } else {
-            reject(new Error('No video stream found'));
-          }
-        }
-      });
-    });
-  };
+    const filename = 'recording';
+
+    const getVideoResolution = (videoPath) => {
+        return new Promise((resolve, reject) => {
+            ffmpeg.ffprobe(videoPath, (err, metadata) => {
+            if (err) {
+                reject(err);
+            } else {
+                const videoStream = metadata.streams.find(stream => stream.codec_type === 'video');
+                if (videoStream) {
+                    resolve({ width: videoStream.width, height: videoStream.height });
+                } else {
+                    reject(new Error('No video stream found'));
+                }
+            }
+            });
+        });
+    };
 
   // Function to process the video
   getVideoResolution(targetFile)
@@ -81,12 +83,20 @@ app.post('/submit', upload.single('video'), (req, res) => {
               console.error('Failed to delete temp file:', err);
             }
           });
-
+          const links = [];
+          for(const result of results) {
+            // console.log(result);
+            const name = filename + '.' + result['format'];
+            links.push({
+                'filename': name,
+                'url': site_url + '/' + video_path + name
+            });
+          }
           // Return the output files' info
           res.json({
             status: 'success',
             message: 'Files resized, cropped, and processed successfully',
-            outputFiles: results.map(result => result.outputFile)
+            links: links
           });
         })
         .catch(err => {
@@ -99,14 +109,32 @@ app.post('/submit', upload.single('video'), (req, res) => {
       res.status(500).json({ status: 'error', message: 'Failed to retrieve video resolution', error: err.message });
     });
 });
+app.get('/videos/:filename', (req, res) => {
+    const filename = req.params.filename;
+    const filePath = path.join(__dirname, 'videos', filename);
 
+    // Ensure the file exists
+    fs.access(filePath, fs.constants.R_OK, (err) => {
+        if (err) {
+        return res.status(404).json({ status: 'error', message: 'File not found' });
+        }
+        
+        // Force download of the file
+        res.download(filePath, filename, (err) => {
+        if (err) {
+            console.error('Error sending the file:', err);
+            res.status(500).send('Error downloading the file');
+        }
+        });
+    });
+});
 // Handle all other methods (e.g., GET) with a 405 Method Not Allowed response
 app.all('/submit', (req, res) => {
   res.status(405).send('Method Not Allowed');
 });
 
 // Start the server
-const port = 3000;
+const port = 3008;
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });

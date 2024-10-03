@@ -15,7 +15,7 @@ const upload = multer({ dest: video_path });
 // Middleware to parse JSON request bodies
 app.set('trust proxy', true);  // This makes req.protocol honor the 'X-Forwarded-Proto' header
 
-// app.use(cors());
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Handles URL-encoded form data
 
@@ -26,12 +26,12 @@ app.post('/submit', upload.single('video'), (req, res) => {
     
     const site_url = req.protocol + '://' + req.get('host'); // http://localhost:3000
     const videoFile = req.file;
-    const { videoWidth, videoHeight } = req.body;
+    let { videoWidth, videoHeight, filename } = req.body;
 
     const targetDir = path.join(__dirname, video_path);
     const targetFile = path.join(targetDir, videoFile.filename);
 
-    const filename = 'recording';
+    filename = filename ? filename : 'recording';
 
     const getVideoResolution = (videoPath) => {
         return new Promise((resolve, reject) => {

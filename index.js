@@ -23,8 +23,9 @@ app.options('*', cors());
 
 // Handle POST requests to /submit
 app.post('/submit', upload.single('video'), (req, res) => {
-    console.log('site_url: ', site_url);
+    
     const site_url = req.protocol + '://' + req.get('host'); // http://localhost:3000
+    console.log('site_url: ', site_url);
     const videoFile = req.file;
     const { videoWidth, videoHeight } = req.body;
 

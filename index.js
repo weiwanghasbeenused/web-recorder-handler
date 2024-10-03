@@ -15,11 +15,11 @@ const upload = multer({ dest: video_path });
 // Middleware to parse JSON request bodies
 // app.set('trust proxy', true);  // This makes req.protocol honor the 'X-Forwarded-Proto' header
 
-app.use(cors());
+// app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Handles URL-encoded form data
 
-app.options('*', cors());
+//app.options('*', cors());
 
 // Handle POST requests to /submit
 app.post('/submit', upload.single('video'), (req, res) => {

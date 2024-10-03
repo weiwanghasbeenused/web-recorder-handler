@@ -11,9 +11,9 @@ ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 const app = express();
 const video_path = 'videos/'
 const upload = multer({ dest: video_path });
-// app.use('/videos', express.static(path.join(__dirname, 'videos')));
+
 // Middleware to parse JSON request bodies
-// app.set('trust proxy', true);  // This makes req.protocol honor the 'X-Forwarded-Proto' header
+app.set('trust proxy', true);  // This makes req.protocol honor the 'X-Forwarded-Proto' header
 
 // app.use(cors());
 app.use(express.json());
@@ -25,7 +25,6 @@ app.use(express.urlencoded({ extended: true })); // Handles URL-encoded form dat
 app.post('/submit', upload.single('video'), (req, res) => {
     
     const site_url = req.protocol + '://' + req.get('host'); // http://localhost:3000
-    console.log('site_url: ', site_url);
     const videoFile = req.file;
     const { videoWidth, videoHeight } = req.body;
 
@@ -138,7 +137,6 @@ app.get('/videos/:filename', (req, res) => {
 app.all('/submit', (req, res) => {
   res.status(405).send('Method Not Allowed');
 });
-
 // Start the server
 const port = 3008;
 app.listen(port, () => {
